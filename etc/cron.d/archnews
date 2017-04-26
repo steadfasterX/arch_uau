@@ -1,0 +1,4 @@
+# get Arch news plus information about your local packages which need to be upgraded
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+41 10 * * * root sudo -u archupdater /home/archupdater/cron_archnews
