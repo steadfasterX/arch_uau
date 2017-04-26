@@ -1,0 +1,69 @@
+#!/bin/bash
+############################################################################
+#
+# Unattended Upgrade of Arch
+#
+############################################################################
+
+# TODO: log rotate (I do not want to overwrite by each run..)
+
+# unattended upgrade config
+UACONF=/etc/unattended-arch-upgrade.conf
+
+export TERM=non-interactive
+
+# get current time stamp
+STARTTIME="$(date '+%F %T')"
+
+# source the necessary conf
+[ ! -f $UACONF ]&& echo "ERROR MISSING $UACONF!!!" && exit 3
+. $UACONF
+
+LOG=$LOGDIR/upgrade-latest.log
+FULLLOG=$LOGDIR/upgrade.log
+
+echo "started $(date)" 
+echo -e "$0 has started $(date)\n\n" > $LOG
+
+[ "$AUTOUPGRADE" != "1" ] && echo "unattended upgrade is disabled in $UACONF" && exit 3
+
+echo "fetching the latest news (and AUR comments) before upgrading"
+echo -e "\n##########################################################\nArch news & AUR comments (for updatable packages only!)\n##########################################################" >> $LOG
+echo -e "as recommended by:\nhttps://wiki.archlinux.org/index.php/System_maintenance#Read_before_upgrading_the_system\n" >> $LOG
+echo -e "Please check $NEWSLOG\n(gets automatically attached when you've activated mail notify)\n" >> $LOG
+[ -x "$ANEWSWRAP" ] && UA=true $ANEWSWRAP
+
+echo "starting the unattended system upgrade!"
+
+# first check the current systemd status and errors and save them for later comparison
+systemctl --failed --plain > $LOGDIR/systemclt-failed.before
+
+echo "check & upgrade repo binaries"
+echo -e "\n##########################################################\ncheck & upgrade REPO binaries\n##########################################################\n" >> $LOG
+sudo -n $PACBIN -Syu --noconfirm --needed --noprogressbar $PACARG >> $LOG 2>&1
+echo "check & upgrade AUR packages"
+echo -e "\n##########################################################\ncheck & upgrade AUR packages\n##########################################################\n" >> $LOG
+$AURBIN -Syu --noconfirm --needed --noprogressbar $AURARG >> $LOG 2>&1
+
+# check the systemd status and errors again after the upgrade made
+systemctl --failed --plain > $LOGDIR/systemclt-failed.after
+
+# compare systemd status and errors and show differences only
+echo -e "\n##########################################################\nShowing systemd status difference (before VS. after upgrade)\n##########################################################" >> $LOG
+echo -e "as recommended by:\nhttps://wiki.archlinux.org/index.php/System_maintenance#Failed_systemd_services\n" >> $LOG
+diff -wu $LOGDIR/systemclt-failed.before $LOGDIR/systemclt-failed.after >> $LOG
+[ $? -eq 0 ]&& echo -e "-- Nothing has changed --\n" >> $LOG
+
+echo -e "\n##########################################################\nShowing journal high prio errors (since the upgrade)\n##########################################################" >> $LOG
+echo -e "as recommended by:\nhttps://wiki.archlinux.org/index.php/System_maintenance#Logfiles\n" >> $LOG
+journalctl -p 3 -xb --since "$STARTTIME" >> $LOG
+
+
+if [ "$UPGRADEMAIL" == "yes" ];then
+        echo -e "$(date)\n$UPGRADECONF" | mail -a $LOG -a $NEWSLOG -r $FROM -s "Unattended Arch upgrade on $(hostname)" $TO
+fi
+
+echo "$0 has finished $(date)" >> $LOG
+cat $LOG >> $FULLLOG
+
+echo "finished"
