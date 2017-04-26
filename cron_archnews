@@ -1,0 +1,76 @@
+#!/bin/bash
+###############################################################
+#
+#
+# cron job to inform you about new Arch updates and their news
+#
+#
+###############################################################
+
+# unattended upgrade config
+UACONF=/etc/unattended-arch-upgrade.conf
+
+# binary for fetching Arch news feed
+ANEWSBIN="/usr/bin/python3 /home/archupdater/archnews/archnews"
+ANEWSARGS="-rc"
+
+# binary for fetching AUR comments
+AURFETCH=/usr/bin/aur-comment-fetch
+AURFETCHARGS="-n 3" # fetch the last X comments
+
+###############################################################
+export TERM=non-interactive
+
+BIN=${0##*/}
+
+# source the necessary conf
+[ ! -f $UACONF ]&& echo "ERROR MISSING $UACONF!!!" && exit 3
+. $UACONF
+
+LOG="$NEWSLOG"
+
+# source the ignores of pacman config
+[ -f "$PACCONF" ]&& PACIGN=$(egrep "^IgnorePkg" $PACCONF | cut -d "=" -f 2)
+
+# source the ignores of unattended config
+[ -f "$UAIGNORE" ] && UAIGN=$(egrep "^IgnorePkg" $UAIGNORE | cut -d "=" -f 2)
+
+#first adjust the filter
+for filter in $PACIGN $UAIGN;do
+	if [ -z "$FILTER" ];then
+		FILTER="$filter"
+	else
+		FILTER="$FILTER|$filter"
+	fi
+done
+
+# using checkupdates & checkupdates-aur) to find available packages then filter with archnews for relevant info 
+# within the Arch news feed for each package.
+echo -e "These binary packages can be upgraded on your machine ($(hostname)):" > $LOG
+echo -e "---------------------------------------------------------------------------\n" >> $LOG
+for cu in $(checkupdates 2>/dev/null|tr " " "|");do
+	unset FPKG PKG
+	FPKG=$(echo "#---- $cu ----#" |tr "|" " ")
+	PKG=$(echo "${cu/|*/}" | egrep -vi "($FILTER)")
+	[ ! -z "$PKG" ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS --grep $PKG 2> /dev/null)\n" >> $LOG
+done
+
+echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
+echo -e "---------------------------------------------------------------------------\n" >> $LOG
+for cuaur in $(checkupdates-aur 2>/dev/null|tr " " "|");do
+	unset FPKG PKG
+	FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
+	PKG=$(echo "${cuaur/|*/}" | egrep -vi "($FILTER)")
+	[ ! -z "$PKG" ] && echo -e "$FPKG\n$($ANEWSBIN $ANEWSARGS --grep $PKG 2> /dev/null)" >> $LOG
+	[ ! -z "$PKG" ] && echo -e "$($AURFETCH $AURFETCHARGS $PKG | egrep -v '^\s*$' | sed 's/\[[0-9]*m//g' 2>/dev/null)" >> $LOG
+	[ ! -z "$PKG" ] && echo -e "\n" >> $LOG
+done
+
+echo -e "\n\n\nLatest Arch News feed (complete - no filter):" >> $LOG
+echo -e "---------------------------------------------------------------------------\n" >> $LOG
+$ANEWSBIN $ANEWSARGS >> $LOG
+
+# only send an email when wanted by the user and not called by unattended upgrade
+if [ "$NEWSMAIL" == "yes" ]&&[ -z "$UA" ];then
+	echo -e "$(date)\n$UPGRADECONF" | mail -a $LOG -r $FROM -s "Arch Update information for $(hostname)" $TO
+fi
