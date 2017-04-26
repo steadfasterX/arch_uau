@@ -1,0 +1,12 @@
+[Unit]
+Description=Unattended Arch Upgrade
+Requires=network-online.target 
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/unattended-upgrade
+TimeoutStopSec=900
+KillMode=process
+KillSignal=SIGINT
+User=archupdater
+
