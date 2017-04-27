@@ -16,9 +16,8 @@ ANEWSARGS="-rc"
 
 # binary for fetching AUR comments
 AURFETCH=/usr/bin/aur-comment-fetch
-AURFETCHARGS="-n 3" # fetch the last X comments
 
-###############################################################
+##############################################################
 export TERM=non-interactive
 
 BIN=${0##*/}
@@ -28,6 +27,13 @@ BIN=${0##*/}
 . $UACONF
 
 LOG="$NEWSLOG"
+
+# set amount of comments for AUR packages
+if [ "$BRIEFNEWSAUR" == 1 ];then
+	AURFETCHARGS="-n 1" # fetch the last comment
+else
+	AURFETCHARGS="-n $AURCOMMENTS" # fetch the last X comments
+fi
 
 # enforce a full refresh for repo and AUR - otherwise checkupdates will not show the real state..
 $AURBIN $AURSYNCARG >> $LOG 2>&1
@@ -52,10 +58,43 @@ done
 echo -e "These binary packages can be upgraded on your machine ($(hostname)):" > $LOG
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
 for cu in $(checkupdates 2>/dev/null|tr " " "|");do
-	unset FPKG PKG
-	FPKG=$(echo "#---- $cu ----#" |tr "|" " ")
-	PKG=$(echo "${cu/|*/}" | egrep -vi "($FILTER)")
-	[ ! -z "$PKG" ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS --grep $PKG 2> /dev/null)\n" >> $LOG
+	unset PKG
+	PKG=$(echo "${cu}" | egrep -vi "($FILTER)")
+	SPKG=${PKG/|*/}
+
+	if [ $BRIEFNEWS == 1 ];then
+		FPKG=$SPKG
+	else
+		FPKG=$(echo "$PKG" | sed 's/|/ /g')
+	fi
+
+	# make a list of all packages
+	if [ ! -z "$PKG" ];then
+
+		if [ -z "$PKGLIST" ];then
+			PKGLIST="$FPKG"
+			SPKGLIST="$SPKG"
+		else
+			if [ $BRIEFNEWS == 1 ];then
+				PKGLIST="$PKGLIST,$FPKG"
+			else
+				PKGLIST="$PKGLIST\n$FPKG"
+			fi
+			SPKGLIST="$SPKGLIST $SPKG"
+		fi
+	fi
+done
+# now send the package summary to the log
+echo -e "$PKGLIST" >> $LOG
+
+echo -e "\n\nThese binary packages have been mentioned on the Arch news page!!" >> $LOG
+echo -e "---------------------------------------------------------------------------" >> $LOG
+echo -e "(please also take a look at the bottom so you don't miss any GLOBAL news!)\n" >> $LOG
+# query arch news for each pkg
+for pkgl in $SPKGLIST;do
+	FPKG=$(echo "#---- $pkgl ----#" |tr "|" " ")
+	$ANEWSBIN $ANEWSARGS --grep $pkgl 2> /dev/null | grep -i 'No news to display' >> /dev/null
+	[ $? -ne 0 ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS --grep $pkgl 2> /dev/null)\n" >> $LOG
 done
 
 echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
@@ -64,8 +103,7 @@ for cuaur in $(checkupdates-aur 2>/dev/null|tr " " "|");do
 	unset FPKG PKG
 	FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
 	PKG=$(echo "${cuaur/|*/}" | egrep -vi "($FILTER)")
-	[ ! -z "$PKG" ] && echo -e "$FPKG\n$($ANEWSBIN $ANEWSARGS --grep $PKG 2> /dev/null)" >> $LOG
-	[ ! -z "$PKG" ] && echo -e "$($AURFETCH $AURFETCHARGS $PKG | egrep -v '^\s*$' | sed 's/\[[0-9]*m//g' 2>/dev/null)" >> $LOG
+	[ ! -z "$PKG" ] && echo -e "$FPKG\n$($AURFETCH $AURFETCHARGS $PKG | egrep -v '^\s*$' | sed 's/\[[0-9]*m//g' 2>/dev/null)" >> $LOG
 	[ ! -z "$PKG" ] && echo -e "\n" >> $LOG
 done
 
