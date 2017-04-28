@@ -10,13 +10,6 @@
 # unattended upgrade config
 UACONF=/etc/unattended-arch-upgrade.conf
 
-# binary for fetching Arch news feed
-ANEWSBIN="/usr/bin/python3 /home/archupdater/archnews/archnews"
-ANEWSARGS="-rc"
-
-# binary for fetching AUR comments
-AURFETCH=/usr/bin/aur-comment-fetch
-
 ##############################################################
 export TERM=non-interactive
 
@@ -36,7 +29,7 @@ else
 fi
 
 # enforce a full refresh for repo and AUR - otherwise checkupdates will not show the real state..
-$AURBIN $AURSYNCARG >> $LOG 2>&1
+$AURBIN $AURNEWSSYNCARG >> $LOG 2>&1
 
 # source the ignores of pacman config
 [ -f "$PACCONF" ]&& PACIGN=$(egrep "^IgnorePkg" $PACCONF | cut -d "=" -f 2)
@@ -99,7 +92,7 @@ done
 
 echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
-for cuaur in $(checkupdates-aur 2>/dev/null|tr " " "|");do
+for cuaur in $(sudo checkupdates-aur 2>/dev/null|tr " " "|");do
 	unset FPKG PKG
 	FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
 	PKG=$(echo "${cuaur/|*/}" | egrep -vi "($FILTER)")
@@ -107,11 +100,36 @@ for cuaur in $(checkupdates-aur 2>/dev/null|tr " " "|");do
 	[ ! -z "$PKG" ] && echo -e "\n" >> $LOG
 done
 
-echo -e "\n\n\nLatest Arch News feed (complete - no filter):" >> $LOG
+# prepare topic line depending on brief or not
+if [ $BRIEFNEWS == 1 ];then
+	if [ -f $ANEWSCONF ];then
+		NINF="only UNREAD - since: $(grep -v '#' $ANEWSCONF)"
+	else
+		NINF="only UNREAD - first run!"
+	fi
+else
+	NINF="with args: $ANEWSARGS"
+fi
+
+echo -e "\n\n\nLatest Arch News feed ($NINF):" >> $LOG
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
-$ANEWSBIN $ANEWSARGS >> $LOG
+
+# we make a new same if loop to handle the formatted output more easily
+if [ "$BRIEFNEWS" == "1" ];then
+	yes | $ANEWSBIN $ANEWSARGS --unread | grep -iv "Mark messages as read" >> $LOG
+else
+	# delete any unread option config so we actually be able to read news again
+	[ -f "$ANEWSCONF" ] && rm "$ANEWSCONF"
+	$ANEWSBIN $ANEWSARGS >> $LOG
+fi
+
+if [ "$AUTOUPGRADE" == "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
+	UPGRADECONF="$UAUON"
+else
+	UPGRADECONF="$UAUOFF"
+fi
 
 # only send an email when wanted by the user and not called by unattended upgrade
 if [ "$NEWSMAIL" == "yes" ]&&[ -z "$UA" ];then
-	echo -e "$(date)\n$UPGRADECONF" | mail -a $LOG -r $FROM -s "Arch Update information for $(hostname)" $TO
+	echo -e "$(date)\n$UPGRADECONF\n\nCHECK THE ATTACHMENT(S)!!\n\n" | mail -a $LOG -r $FROM -s "Arch Update information for $(hostname)" $TO
 fi
