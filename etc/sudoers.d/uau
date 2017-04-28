@@ -1,0 +1,10 @@
+############################################################
+# unattended Arch upgrade
+############################################################
+
+# allow the uAu user to destroy your system
+archupdater	ALL=NOPASSWD: /usr/bin/pacman *
+
+# special handling for AUR checkupdates only
+archupdater	ALL=NOPASSWD: /usr/bin/checkupdates-aur *
+
