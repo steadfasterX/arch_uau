@@ -25,7 +25,11 @@ FULLLOG=$LOGDIR/upgrade.log
 echo "started $(date)" 
 echo -e "$0 has started $(date)\n\n" > $LOG
 
-[ "$AUTOUPGRADE" != "1" ] && echo "unattended upgrade is disabled in $UACONF" && exit 3
+if [ "$AUTOUPGRADE" == "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
+        UPGRADECONF="$UAUON"
+else
+	echo "unattended upgrade is disabled in $UACONF" && exit 3
+fi
 
 echo "fetching the latest news (and AUR comments) before upgrading"
 echo -e "\n##########################################################\nArch news & AUR comments (for updatable packages only!)\n##########################################################" >> $LOG
