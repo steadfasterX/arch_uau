@@ -73,3 +73,9 @@ What this is:
 [04-28 10:52] <steadfasterX> i forgot to mention that the whole crap is fully configurable to your needs x)
 ````
 
+## Installation
+
+    read INSTALL
+
+
+
