@@ -1,0 +1,38 @@
+uAu(1) -- unattended Arch upgrade is a little helper to damage your system by installing Arch upgrades non-interactively
+====
+
+## DESCRIPTION
+
+Global(!) description for the main parts of uAu.
+
+## unattended-arch-upgrade.service
+
+The service responsible to DAMAGE your system. It is controlled by the uAu timer (unattended-arch-upgrade.timer)
+
+## unattended-arch-upgrade.timer
+
+This timer controls unattended-arch-upgrade.service.
+
+The OnCalendar function let you choose [systemd time](http://man7.org/linux/man-pages/man7/systemd.time.7.html#CALENDAR_EVENTS)
+
+Persistent=false is set by default which means uAu will NOT do an immediate action when the time passed by and the PC was offline.
+
+## unattended-arch-upgrade.conf
+
+The main configuration file for uAu. This has to be adjusted to your needs. Especially when you want to activate the damage eehm.. upgrade feature.
+
+## unattended-arch-upgrade.ignore
+
+The option IgnorePkg EXTENDS the pacman IgnorePkg. This way you can have different ignores when doing a regular upgrade and an unattended.
+
+## AUTHOR
+
+steadfasterX <steadfastX@boun.cr>
+
+## SEE ALSO
+
+[uAu on github](https://github.com/steadfasterX/arch_unattended-upgrade)
+
+
+
+

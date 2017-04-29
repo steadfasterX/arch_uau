@@ -1,0 +1,81 @@
+uAu(1) -- unattended Arch upgrade is a little helper to damage your system by installing Arch upgrades non-interactively
+====
+
+## SYNOPSIS
+
+`uau` (will be executed by systemd)<br>
+`uau-news` (will be executed by `uau`)
+
+## DESCRIPTION
+
+Unattended upgrades are completely against the Arch philosophy!
+
+So **NEVER ever** set the _AUTOUPGRADE_ of uAu ;)
+
+
+**The usual Arch upgrade flow**
+
+BEFORE starting any upgrade
+
+    1) Read the Arch news site
+    2) If you use packages from the AUR it is recommended to check the latest comments there
+    3) Take your time for doing the upgrade
+
+DOING the upgrade
+
+    4) Always sync the databases before doing anything else
+    5) Partial Upgrades are totally unsupported! So never ever use "IgnorePkg" --ignore or --ignoregroup
+    6) Sit down, answer questions, make the upgrade interactively
+
+AFTER the upgrade
+
+    7) Check systemd failure states
+    8) Check journal for high prio errors
+    
+
+**The uAu flow (default)**
+
+uAu will by default do for you:
+
+    steps 1,2 and 4 and send this by Email so you stay informed in order to do the other steps
+
+
+**The uAu flow (advanced)**
+
+uAu CAN do for you (if you change the default setting):
+
+    steps 1-8 and send you the results by Email
+    (means a fully unattended upgrade with all the above)
+
+## FILES
+
+The following files should be reviewed and maybe adjusted for your needs:
+
+
+<u>/etc/unattended-arch-upgrade.conf</u>
+
+                 The main configuration file
+
+<u>/etc/unattended-arch-upgrade.ignore</u>
+
+                 uAu package ignores for an unattended upgrade
+
+<u>/etc/cron.d/archnews</u>
+
+                 Time setting for the uAu info mail
+
+<u>/unattended-arch-upgrade.timer</u>
+             
+                 Timer for starting uAu
+
+## AUTHOR
+
+steadfasterX <steadfastX@boun.cr>
+
+## SEE ALSO
+
+[uAu on github](https://github.com/steadfasterX/arch_unattended-upgrade)
+
+
+
+
