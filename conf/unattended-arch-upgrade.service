@@ -4,7 +4,7 @@ Requires=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/unattended-upgrade
+ExecStart=/usr/local/bin/uau
 TimeoutStopSec=900
 KillMode=process
 KillSignal=SIGINT
