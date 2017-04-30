@@ -74,6 +74,8 @@ steadfasterX <steadfastX@boun.cr>
 
 ## SEE ALSO
 
+`man 5 uau`
+
 [uAu on github](https://github.com/steadfasterX/arch_unattended-upgrade)
 
 
