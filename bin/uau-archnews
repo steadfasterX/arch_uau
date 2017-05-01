@@ -86,8 +86,8 @@ echo -e "(please also take a look at the bottom so you don't miss any GLOBAL new
 # query arch news for each pkg
 for pkgl in $SPKGLIST;do
 	FPKG=$(echo "#---- $pkgl ----#" |tr "|" " ")
-	$ANEWSBIN $ANEWSARGS --grep $pkgl 2> /dev/null | grep -i 'No news to display' >> /dev/null
-	[ $? -ne 0 ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS --grep $pkgl 2> /dev/null)\n" >> $LOG
+	$ANEWSBIN $ANEWSARGS --grep $pkgl 2> /dev/null | grep -i 'No news to display' >> /dev/null 2>&1
+	[ $? -eq 0 ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS --grep $pkgl 2> /dev/null)\n" >> $LOG
 done
 
 echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
