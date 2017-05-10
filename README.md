@@ -43,7 +43,7 @@ uAu CAN do for you (if you change the default setting):
 
 
 
-What this is:
+What this is (excerpt from IRC):
 
 
 ````
@@ -75,7 +75,8 @@ What this is:
 
 ## Installation
 
-    read INSTALL
+    read and follow: https://github.com/steadfasterX/arch_uau-pkg/blob/master/README.md
+
 
 
 
