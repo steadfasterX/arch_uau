@@ -1,0 +1,4 @@
+# get Arch news plus information about your local packages which need to be upgraded
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+10 10 * * * root sudo -u archupdater /usr/local/bin/uau-archnews

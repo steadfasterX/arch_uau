@@ -1,0 +1,9 @@
+# PARTIAL UPGRADES ARE NOT SUPPORTED! USE THIS WITH CARE!
+# Check this first:
+# https://wiki.archlinux.org/index.php/System_maintenance#Partial_upgrades_are_unsupported
+
+# The option IgnorePkg EXTENDS the pacman ignores. This way you can have different ignores
+# when doing a regular upgrade and an unattended.
+# Format: 1 package in for every ignore! Do not use space delimitated syntax here!
+#IgnorePkg=linux-lts
+#IgnorePkg=linux

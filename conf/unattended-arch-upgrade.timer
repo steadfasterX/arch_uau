@@ -1,0 +1,9 @@
+[Unit]
+Description=Automatic Arch Update. Every Tuesday and Saturday on every day in the year at a specific time.
+
+[Timer]
+OnCalendar=Tue,Sat *-*-* 16:30:02
+Persistent=false
+
+[Install]
+WantedBy=multi-user.target
