@@ -75,7 +75,9 @@ What this is (excerpt from IRC):
 
 ## Installation
 
-    read and follow: https://github.com/steadfasterX/arch_uau-pkg/blob/master/README.md
+read and follow: 
+
+https://github.com/steadfasterX/arch_uau-pkg/blob/master/README.md
 
 
 
