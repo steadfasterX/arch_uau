@@ -39,11 +39,11 @@ $AURBIN $AURNEWSSYNCARG >> $LOG 2>&1
 
 #first adjust the filter
 for filter in $PACIGN $UAIGN;do
-	if [ -z "$FILTER" ];then
-		FILTER="$filter"
-	else
-		FILTER="$FILTER|$filter"
-	fi
+        if [ -z "$FILTER" ];then
+                [ ! -z "$filter" ] && FILTER="$filter"
+        else
+                [ ! -z "$filter" ] && FILTER="$FILTER|$filter"
+        fi
 done
 
 # using checkupdates & checkupdates-aur) to find available packages then filter with archnews for relevant info 
@@ -52,8 +52,13 @@ echo -e "These binary packages can be upgraded on your machine ($(hostname)):" >
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
 for cu in $(checkupdates 2>/dev/null|tr " " "|");do
 	unset PKG
-	PKG=$(echo "${cu}" | egrep -vi "($FILTER)")
-	SPKG=${PKG/|*/}
+
+        if [ -z "$FILTER" ];then
+            PKG=$(echo "${cu}")
+        else
+            PKG=$(echo "${cu}" | egrep -vi "($FILTER)")
+        fi
+        SPKG=${PKG/|*/}
 
 	if [ $BRIEFNEWS == 1 ];then
 		FPKG=$SPKG
