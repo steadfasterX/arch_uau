@@ -1,5 +1,5 @@
 [Unit]
-Description=Unattended Arch Upgrade.
+Description=Unattended Arch Upgrade timer - just watching...
 
 [Timer]
 OnCalendar=Tue,Sat *-*-* 16:30:02
