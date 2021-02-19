@@ -50,7 +50,7 @@ done
 # within the Arch news feed for each package.
 echo -e "These binary packages can be upgraded on your machine ($(hostname)):" > $LOG
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
-for cu in $(checkupdates 2>/dev/null|tr " " "|");do
+for cu in $($PACBIN -Qu 2>> $LOG |tr " " "|");do
 	unset PKG
 
         if [ -z "$FILTER" ];then
@@ -97,7 +97,7 @@ done
 
 echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
-for cuaur in $(sudo checkupdates-aur 2>/dev/null|tr " " "|");do
+for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> $LOG |tr " " "|");do
 	unset FPKG PKG
 	FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
 	PKG=$(echo "${cuaur/|*/}" | egrep -vi "($FILTER)")
@@ -121,7 +121,7 @@ echo -e "-----------------------------------------------------------------------
 
 # we make a new same if loop to handle the formatted output more easily
 if [ "$BRIEFNEWS" == "1" ];then
-	yes | $ANEWSBIN $ANEWSARGS --unread | grep -iv "Mark messages as read" >> $LOG
+	yes | $ANEWSBIN $ANEWSARGS --unread 2>> $LOG | grep -iv "Mark messages as read" >> $LOG
 else
 	# delete any unread option config so we actually be able to read news again
 	[ -f "$ANEWSCONF" ] && rm "$ANEWSCONF"
