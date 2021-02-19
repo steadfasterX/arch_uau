@@ -1,5 +1,5 @@
 [Unit]
-Description=Automatic Arch Update. Every Tuesday and Saturday on every day in the year at a specific time.
+Description=Unattended Arch Upgrade.
 
 [Timer]
 OnCalendar=Tue,Sat *-*-* 16:30:02
