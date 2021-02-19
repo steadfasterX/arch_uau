@@ -2,7 +2,7 @@
 
 Unattended upgrades are completely against the Arch philosophy!
 
-So **NEVER ever** set the _AUTOUPGRADE_ of uAu!!! ;)
+So **NEVER ever** enable the _AUTOUPGRADE_ of uAu!!! ;) - just kidding. I use the auto-upgrade since 2017 without any issues on 2 desktop PCs.
 
 
 ##  The usual Arch upgrade flow
@@ -73,12 +73,15 @@ What this is (excerpt from IRC):
 [04-28 10:52] <steadfasterX> i forgot to mention that the whole crap is fully configurable to your needs x)
 ````
 
-## Installation
+
+## Normal installation
+
+`trizen -S uau`
+
+## Manual installation
 
 read and follow: 
 
 https://github.com/steadfasterX/arch_uau-pkg/blob/master/README.md
-
-
 
 
