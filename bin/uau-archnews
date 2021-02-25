@@ -136,5 +136,5 @@ fi
 
 # only send an email when wanted by the user and not called by unattended upgrade
 if [ "$NEWSMAIL" == "yes" ]&&[ -z "$UA" ];then
-	echo -e "$(date)\n$UPGRADECONF\n\nCHECK THE ATTACHMENT(S)!!\n\n" | mail -a $LOG -r $FROM -s "Arch Update information for $(hostname)" $TO
+	echo -e "$(date)\n$UPGRADECONF\n\n$(cat $LOG)\n\nCHECK THE ATTACHMENT(S)!!\n\n" | mail -r $FROM -s "Arch Update information for $(hostname)" $TO
 fi
