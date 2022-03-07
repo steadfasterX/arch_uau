@@ -76,7 +76,7 @@ What this is (excerpt from IRC):
 
 ## Normal installation
 
-`trizen -S uau`
+`yay -S uau`
 
 ## Manual installation
 
