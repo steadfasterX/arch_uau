@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 ###############################################################
 #
 #
@@ -13,128 +13,162 @@ UACONF=/etc/unattended-arch-upgrade.conf
 ##############################################################
 export TERM=non-interactive
 
-BIN=${0##*/}
-
 # source the necessary conf
-[ ! -f $UACONF ]&& echo "ERROR MISSING $UACONF!!!" && exit 3
+if [ ! -f $UACONF ]; then
+    echo "ERROR: MISSING $UACONF!!!" 2>&1
+    exit 3
+fi
+# shellcheck disable=1090
 . $UACONF
 
 LOG="$NEWSLOG"
 
 # set amount of comments for AUR packages
-if [ "$BRIEFNEWSAUR" == 1 ];then
-	AURFETCHARGS="-n 1" # fetch the last comment
+if [ "$BRIEFNEWSAUR" = 1 ];then
+    AURFETCHARGS="-n 1" # fetch the last comment
 else
-	AURFETCHARGS="-n $AURCOMMENTS" # fetch the last X comments
+    AURFETCHARGS="-n $AURCOMMENTS" # fetch the last X comments
 fi
 
 # enforce a full refresh for repo and AUR - otherwise checkupdates will not show the real state..
+# shellcheck disable=SC2086
 $AURBIN $AURNEWSSYNCARG >> $LOG 2>&1
 
 # source the ignores of pacman config
-[ -f "$PACCONF" ]&& PACIGN=$(egrep "^IgnorePkg" $PACCONF | cut -d "=" -f 2)
+[ -f "$PACCONF" ]&& PACIGN=$(grep -E "^IgnorePkg" "$PACCONF" | cut -d "=" -f 2)
 
 # source the ignores of unattended config
-[ -f "$UAIGNORE" ] && UAIGN=$(egrep "^IgnorePkg" $UAIGNORE | cut -d "=" -f 2)
+[ -f "$UAIGNORE" ] && UAIGN=$(grep -E "^IgnorePkg" "$UAIGNORE" | cut -d "=" -f 2)
 
 #first adjust the filter
-for filter in $PACIGN $UAIGN;do
-        if [ -z "$FILTER" ];then
-                [ ! -z "$filter" ] && FILTER="$filter"
-        else
-                [ ! -z "$filter" ] && FILTER="$FILTER|$filter"
-        fi
+for filter in $PACIGN $UAIGN; do
+    FILTER="${FILTER:+$FILTER|}$filter"
 done
 
-# using checkupdates & checkupdates-aur) to find available packages then filter with archnews for relevant info 
+# using checkupdates & checkupdates-aur) to find available packages then filter with archnews for relevant info
 # within the Arch news feed for each package.
-echo -e "These binary packages can be upgraded on your machine ($(hostname)):" > $LOG
-echo -e "---------------------------------------------------------------------------\n" >> $LOG
-for cu in $($PACBIN -Qu 2>> $LOG |tr " " "|");do
-	unset PKG
+cat <<EOF >> "$LOG"
+These binary packages can be upgraded on your machine ($(hostname)):
+---------------------------------------------------------------------------
 
-        if [ -z "$FILTER" ];then
-            PKG=$(echo "${cu}")
+EOF
+for cu in $($PACBIN -Qu 2>> "$LOG" | tr " " "|");do
+    unset PKG
+
+    if [ -z "$FILTER" ];then
+        PKG=$cu
+    else
+        PKG=$(echo "${cu}" | grep -Evi "($FILTER)")
+    fi
+    SPKG=${PKG%%|*}
+
+    if [ "$BRIEFNEWS" = 1 ];then
+        FPKG=$SPKG
+    else
+        FPKG=$(echo "$PKG" | tr "|" " ")
+    fi
+
+    # make a list of all packages
+    if [ -n "$PKG" ];then
+        SPKGLIST=${SPKGLIST:+$SPKGLIST }$SPKG
+        if [ "$BRIEFNEWS" = 1 ];then
+            PKGLIST="${PKGLIST:+$PKGLIST,}$FPKG"
         else
-            PKG=$(echo "${cu}" | egrep -vi "($FILTER)")
+            PKGLIST="${PKGLIST:+$PKGLIST\n}$FPKG"
         fi
-        SPKG=${PKG/|*/}
-
-	if [ $BRIEFNEWS == 1 ];then
-		FPKG=$SPKG
-	else
-		FPKG=$(echo "$PKG" | sed 's/|/ /g')
-	fi
-
-	# make a list of all packages
-	if [ ! -z "$PKG" ];then
-
-		if [ -z "$PKGLIST" ];then
-			PKGLIST="$FPKG"
-			SPKGLIST="$SPKG"
-		else
-			if [ $BRIEFNEWS == 1 ];then
-				PKGLIST="$PKGLIST,$FPKG"
-			else
-				PKGLIST="$PKGLIST\n$FPKG"
-			fi
-			SPKGLIST="$SPKGLIST $SPKG"
-		fi
-	fi
+    fi
 done
 # now send the package summary to the log
-echo -e "$PKGLIST" >> $LOG
+printf "%s\n" "$PKGLIST" >> "$LOG"
+cat <<EOF >> "$LOG"
 
-echo -e "\n\nThese binary packages have been mentioned on the Arch news page!!" >> $LOG
-echo -e "---------------------------------------------------------------------------" >> $LOG
-echo -e "(please also take a look at the bottom so you don't miss any GLOBAL news!)\n" >> $LOG
+
+These binary packages have been mentioned on the Arch news page!!
+---------------------------------------------------------------------------
+(please also take a look at the bottom so you don't miss any GLOBAL news!)
+
+EOF
 # query arch news for each pkg
-for pkgl in $SPKGLIST;do
-	FPKG=$(echo "#---- $pkgl ----#" |tr "|" " ")
-        $ANEWSBIN -rc -n 10 --grep "$pkgl " >> /dev/null 2>&1
-        [ $? -eq 0 ] && echo -e "${FPKG}\n$($ANEWSBIN -rc -n 10 --grep "$pkgl ")\n" >> $LOG 2>&1
+for pkgl in $SPKGLIST; do
+    FPKG=$(echo "#---- $pkgl ----#" | tr "|" " ")
+
+    if OUT=$($ANEWSBIN -rc -n 10 --grep "$pkgl "); then
+        printf '%s\n%s\n\n' "$FPKG" "$OUT" >> "$LOG" 2>&1
+    fi
 done
 
-echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
-echo -e "---------------------------------------------------------------------------\n" >> $LOG
-for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> $LOG |tr " " "|");do
-	unset FPKG PKG
-	FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
-	PKG=$(echo "${cuaur/|*/}" | egrep -vi "($FILTER)")
-	[ ! -z "$PKG" ] && echo -e "$FPKG\n$($AURFETCH $AURFETCHARGS $PKG | egrep -v '^\s*$' | sed 's/\[[0-9]*m//g' 2>/dev/null)" >> $LOG
-	[ ! -z "$PKG" ] && echo -e "\n" >> $LOG
+cat <<EOF >> "$LOG"
+
+
+These AUR packages can be upgraded on your machine ($(hostname)):
+---------------------------------------------------------------------------
+
+EOF
+# shellcheck disable=SC2086
+for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$LOG" | tr " " "|"); do
+    unset FPKG PKG
+    FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
+    PKG=$(echo "${cuaur%%|*}" | grep -Evi "($FILTER)")
+    if [ -n "$PKG" ]; then
+        echo "$FPKG"
+        $AURFETCH $AURFETCHARGS $PKG \
+            | grep -Ev '^\s*$' \
+            | sed 's/\[[0-9]*m//g' 2>/dev/null >> "$LOG"
+        echo >> $LOG
+    fi
 done
 
 # prepare topic line depending on brief or not
-if [ $BRIEFNEWS == 1 ];then
-	if [ -f $ANEWSCONF ];then
-		NINF="only UNREAD - since: $(grep -v '#' $ANEWSCONF)"
-	else
-		NINF="only UNREAD - first run!"
-	fi
+if [ "$BRIEFNEWS" = 1 ];then
+    if [ -f "$ANEWSCONF" ];then
+        NINF="only UNREAD - since: $(grep -v '#' "$ANEWSCONF")"
+    else
+        NINF="only UNREAD - first run!"
+    fi
 else
-	NINF="with args: $ANEWSARGS"
+    NINF="with args: $ANEWSARGS"
 fi
 
-echo -e "\n\n\nLatest Arch News feed ($NINF):" >> $LOG
-echo -e "---------------------------------------------------------------------------\n" >> $LOG
+cat <<EOF >> "$LOG"
+
+
+Latest Arch News feed ($NINF):
+---------------------------------------------------------------------------
+
+EOF
 
 # we make a new same if loop to handle the formatted output more easily
-if [ "$BRIEFNEWS" == "1" ];then
-	yes | $ANEWSBIN $ANEWSARGS --unread 2>> $LOG | grep -iv "Mark messages as read" >> $LOG
+if [ "$BRIEFNEWS" = 1 ];then
+    # shellcheck disable=SC2086
+    yes | $ANEWSBIN $ANEWSARGS --unread 2>> "$LOG" \
+        | grep -iv "Mark messages as read" >> "$LOG"
 else
-	# delete any unread option config so we actually be able to read news again
-	[ -f "$ANEWSCONF" ] && rm "$ANEWSCONF"
-	$ANEWSBIN $ANEWSARGS >> $LOG
+    # delete any unread option config so we actually be able to read news again
+    [ -f "$ANEWSCONF" ] && rm -f "$ANEWSCONF"
+    # shellcheck disable=SC2086
+    $ANEWSBIN $ANEWSARGS >> "$LOG"
 fi
 
-if [ "$AUTOUPGRADE" == "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
-	UPGRADECONF="$UAUON"
+if [ "$AUTOUPGRADE" = "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
+    UPGRADECONF=$UAUON
 else
-	UPGRADECONF="$UAUOFF"
+    UPGRADECONF=$UAUOFF
 fi
 
 # only send an email when wanted by the user and not called by unattended upgrade
-if [ "$NEWSMAIL" == "yes" ]&&[ -z "$UA" ];then
-	echo -e "$(date)\n$UPGRADECONF\n\n$(cat $LOG)\n\nCHECK THE ATTACHMENT(S)!!\n\n" | mail -r $FROM -s "Arch Update information for $(hostname)" $TO
+if [ "$NEWSMAIL" = yes ] && [ -z "$UA" ];then
+    cat <<EOF \
+        | mail -r "$FROM" \
+               -s "Arch Update Information for $(hostname)" \
+               "$TO"
+$(date)
+$UPGRADECONF
+
+$(cat "$LOG")
+
+CHECK THE ATTACHMENT(S)!!
+
+
+
+EOF
 fi
