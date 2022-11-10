@@ -15,7 +15,7 @@ export TERM=non-interactive
 
 # source the necessary conf
 if [ ! -f $UACONF ]; then
-    echo "ERROR: MISSING $UACONF!!!" 2>&1
+    echo "ERROR: MISSING $UACONF!!!" >&2
     exit 3
 fi
 # shellcheck disable=1090

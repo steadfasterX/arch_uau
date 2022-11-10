@@ -18,7 +18,7 @@ UACONF=/etc/unattended-arch-upgrade.conf
 
 # source the necessary conf
 if [ ! -f $UACONF ]; then
-    echo "ERROR: MISSING $UACONF!!!" 2>&1
+    echo "ERROR: MISSING $UACONF!!!" >&2
     exit 3
 fi
 # shellcheck disable=SC1090
