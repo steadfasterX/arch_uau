@@ -31,7 +31,7 @@ START_DATE=$(date --date="$NOW")
 echo "started $START_DATE"
 printf '%s has started %s\n\n\n' "$0" "$START_DATE" > "$LOG"
 
-if [ "$AUTOUPGRADE" != "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
+if [ "$AUTOUPGRADE" != "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
     echo "unattended upgrade is disabled in $UACONF"
     exit 3
 fi
@@ -113,7 +113,7 @@ journalctl -p 3 -xb --since "$STARTTIME" >> "$LOG"
 
 
 END_DATE=$(date)
-if [ "$UPGRADEMAIL" = yes ];then
+if [ "$UPGRADEMAIL" = yes ]; then
     printf "%s\n%s\n" "$END_DATE" "$UPGRADECONF" \
         | mail \
             -r "$FROM" \

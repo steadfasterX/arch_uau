@@ -24,7 +24,7 @@ fi
 LOG="$NEWSLOG"
 
 # set amount of comments for AUR packages
-if [ "$BRIEFNEWSAUR" = 1 ];then
+if [ "$BRIEFNEWSAUR" = 1 ]; then
     AURFETCHARGS="-n 1" # fetch the last comment
 else
     AURFETCHARGS="-n $AURCOMMENTS" # fetch the last X comments
@@ -52,26 +52,26 @@ These binary packages can be upgraded on your machine ($(hostname)):
 ---------------------------------------------------------------------------
 
 EOF
-for cu in $($PACBIN -Qu 2>> "$LOG" | tr " " "|");do
+for cu in $($PACBIN -Qu 2>> "$LOG" | tr " " "|"); do
     unset PKG
 
-    if [ -z "$FILTER" ];then
+    if [ -z "$FILTER" ]; then
         PKG=$cu
     else
         PKG=$(echo "${cu}" | grep -Evi "($FILTER)")
     fi
     SPKG=${PKG%%|*}
 
-    if [ "$BRIEFNEWS" = 1 ];then
+    if [ "$BRIEFNEWS" = 1 ]; then
         FPKG=$SPKG
     else
         FPKG=$(echo "$PKG" | tr "|" " ")
     fi
 
     # make a list of all packages
-    if [ -n "$PKG" ];then
+    if [ -n "$PKG" ]; then
         SPKGLIST=${SPKGLIST:+$SPKGLIST }$SPKG
-        if [ "$BRIEFNEWS" = 1 ];then
+        if [ "$BRIEFNEWS" = 1 ]; then
             PKGLIST="${PKGLIST:+$PKGLIST,}$FPKG"
         else
             PKGLIST="${PKGLIST:+$PKGLIST\n}$FPKG"
@@ -119,8 +119,8 @@ for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$LOG" | tr " " "|"); do
 done
 
 # prepare topic line depending on brief or not
-if [ "$BRIEFNEWS" = 1 ];then
-    if [ -f "$ANEWSCONF" ];then
+if [ "$BRIEFNEWS" = 1 ]; then
+    if [ -f "$ANEWSCONF" ]; then
         NINF="only UNREAD - since: $(grep -v '#' "$ANEWSCONF")"
     else
         NINF="only UNREAD - first run!"
@@ -138,7 +138,7 @@ Latest Arch News feed ($NINF):
 EOF
 
 # we make a new same if loop to handle the formatted output more easily
-if [ "$BRIEFNEWS" = 1 ];then
+if [ "$BRIEFNEWS" = 1 ]; then
     # shellcheck disable=SC2086
     yes | $ANEWSBIN $ANEWSARGS --unread 2>> "$LOG" \
         | grep -iv "Mark messages as read" >> "$LOG"
@@ -149,14 +149,14 @@ else
     $ANEWSBIN $ANEWSARGS >> "$LOG"
 fi
 
-if [ "$AUTOUPGRADE" = "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
+if [ "$AUTOUPGRADE" = "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
     UPGRADECONF=$UAUON
 else
     UPGRADECONF=$UAUOFF
 fi
 
 # only send an email when wanted by the user and not called by unattended upgrade
-if [ "$NEWSMAIL" = yes ] && [ -z "$UA" ];then
+if [ "$NEWSMAIL" = yes ] && [ -z "$UA" ]; then
     cat <<EOF \
         | mail -r "$FROM" \
                -s "Arch Update Information for $(hostname)" \
