@@ -32,10 +32,10 @@ fi
 $AURBIN $AURNEWSSYNCARG >> $LOG 2>&1
 
 # source the ignores of pacman config
-[ -f "$PACCONF" ]&& PACIGN=$(egrep "^IgnorePkg" $PACCONF | cut -d "=" -f 2)
+[ -f "$PACCONF" ]&& PACIGN=$(grep -E "^IgnorePkg" $PACCONF | cut -d "=" -f 2)
 
 # source the ignores of unattended config
-[ -f "$UAIGNORE" ] && UAIGN=$(egrep "^IgnorePkg" $UAIGNORE | cut -d "=" -f 2)
+[ -f "$UAIGNORE" ] && UAIGN=$(grep -E "^IgnorePkg" $UAIGNORE | cut -d "=" -f 2)
 
 #first adjust the filter
 for filter in $PACIGN $UAIGN;do
@@ -56,7 +56,7 @@ for cu in $($PACBIN -Qu 2>> $LOG |tr " " "|");do
         if [ -z "$FILTER" ];then
             PKG=$(echo "${cu}")
         else
-            PKG=$(echo "${cu}" | egrep -vi "($FILTER)")
+            PKG=$(echo "${cu}" | grep -E -vi "($FILTER)")
         fi
         SPKG=${PKG/|*/}
 
@@ -100,8 +100,8 @@ echo -e "-----------------------------------------------------------------------
 for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> $LOG |tr " " "|");do
 	unset FPKG PKG
 	FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
-	PKG=$(echo "${cuaur/|*/}" | egrep -vi "($FILTER)")
-	[ ! -z "$PKG" ] && echo -e "$FPKG\n$($AURFETCH $AURFETCHARGS $PKG | egrep -v '^\s*$' | sed 's/\[[0-9]*m//g' 2>/dev/null)" >> $LOG
+	PKG=$(echo "${cuaur/|*/}" | grep -E -vi "($FILTER)")
+	[ ! -z "$PKG" ] && echo -e "$FPKG\n$($AURFETCH $AURFETCHARGS $PKG | grep -E -v '^\s*$' | sed 's/\[[0-9]*m//g' 2>/dev/null)" >> $LOG
 	[ ! -z "$PKG" ] && echo -e "\n" >> $LOG
 done
 
