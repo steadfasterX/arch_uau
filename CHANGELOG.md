@@ -12,6 +12,12 @@ Example:
 sdiff -s /etc/unattended-arch-upgrade.conf /etc/unattended-arch-upgrade.conf.pacnew
 ```
 
+Requirements:
+
+- added: `python-feedparser`
+- removed: `archnews2`
+- removed: `python3-memoizedb`
+
 Enhancements:
 
 - all executables have been moved to `/usr/bin` (before `/usr/local/bin`)
