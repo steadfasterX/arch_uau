@@ -24,6 +24,10 @@ fi
 . $UACONF
 
 LOG="$NEWSLOG"
+ELOG="$NEWSLOG.err"
+
+> $LOG
+> $ELOG
 
 # set amount of comments for AUR packages
 if [ "$BRIEFNEWSAUR" = 1 ]; then
@@ -34,7 +38,7 @@ fi
 
 # enforce a full refresh for repo and AUR - otherwise checkupdates will not show the real state..
 # shellcheck disable=SC2086
-$AURBIN $AURNEWSSYNCARG >> $LOG 2>&1
+$AURBIN $AURNEWSSYNCARG >> $ELOG 2>&1
 
 # source the ignores of pacman config
 [ -f "$PACCONF" ]&& PACIGN=$(grep -E "^IgnorePkg" "$PACCONF" | cut -d "=" -f 2)
@@ -54,7 +58,7 @@ These binary packages can be upgraded on your machine ($(hostname)):
 ---------------------------------------------------------------------------
 
 EOF
-for cu in $($PACBIN -Qu 2>> "$LOG" | tr " " "|"); do
+for cu in $($PACBIN -Qu 2>> "$ELOG" | tr " " "|"); do
     unset PKG
 
     if [ -z "$FILTER" ]; then
@@ -81,7 +85,7 @@ for cu in $($PACBIN -Qu 2>> "$LOG" | tr " " "|"); do
     fi
 done
 # now send the package summary to the log
-printf "%s\n" "$PKGLIST" >> "$LOG"
+echo -e "$PKGLIST" >> "$LOG" 2>> $ELOG
 cat <<EOF >> "$LOG"
 
 
@@ -91,8 +95,10 @@ These binary packages have been mentioned on the Arch news page!!
 
 EOF
 # query arch news for each pkg
-$ANEWSBIN $ANEWSARGS -p $SPKGLIST
-[ $? -eq 0 ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS -p $PKGLIST --debug)\n" >> $LOG 2>&1
+$ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST
+if [ $? -eq 0 ];then
+    echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS -p $PKGLIST --debug)\n" >> $LOG 2>> $ELOG
+fi
 
 cat <<EOF >> "$LOG"
 
@@ -102,15 +108,15 @@ These AUR packages can be upgraded on your machine ($(hostname)):
 
 EOF
 # shellcheck disable=SC2086
-for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$LOG" | tr " " "|"); do
+for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$ELOG" | tr " " "|"); do
     unset FPKG PKG
-    FPKG=$(echo "#---- $cuaur ----#" |tr "|" " ")
+    FPKG=$(echo "$cuaur: " |tr "|" " ")
     PKG=$(echo "${cuaur%%|*}" | grep -Evi "($FILTER)")
     if [ -n "$PKG" ]; then
         echo "$FPKG"
-        $AURFETCH $AURFETCHARGS $PKG \
+        $AURFETCH $AURFETCHARGS $PKG 2>> $ELOG \
             | grep -Ev '^\s*$' \
-            | sed 's/\[[0-9]*m//g' 2>/dev/null >> "$LOG"
+            | sed 's/\[[0-9]*m//g' 2>> $ELOG >> "$LOG"
         echo >> $LOG
     fi
 done
@@ -137,13 +143,13 @@ EOF
 # we make a new same if loop to handle the formatted output more easily
 if [ "$BRIEFNEWS" = 1 ]; then
     # shellcheck disable=SC2086
-    yes | $ANEWSBIN $ANEWSARGS 2>> "$LOG" \
+    yes | $ANEWSBIN $ANEWSARGS 2>> "$ELOG" \
         | grep -iv "Mark messages as read" >> "$LOG"
 else
     # delete any unread option config so we actually be able to read news again
     [ -f "$ANEWSCONF" ] && rm -f "$ANEWSCONF"
     # shellcheck disable=SC2086
-    $ANEWSBIN $ANEWSARGS >> "$LOG"
+    $ANEWSBIN $ANEWSARGS >> "$LOG" 2>> $ELOG
 fi
 
 if [ "$AUTOUPGRADE" = "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then

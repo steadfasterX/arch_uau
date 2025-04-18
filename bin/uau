@@ -117,7 +117,7 @@ journalctl -p 3 -xb --since "$STARTTIME" >> "$LOG"
 
 END_DATE=$(date)
 if [ "$UPGRADEMAIL" = yes ]; then
-    printf "%s\n%s\n" "$END_DATE" "$UPGRADECONF" \
+    echo -e "$END_DATE" "$UPGRADECONF" \
         | mail \
             -r "$FROM" \
             -s "Unattended Arch upgrade on $(hostname)" \
