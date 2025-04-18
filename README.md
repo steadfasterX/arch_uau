@@ -4,6 +4,10 @@ Unattended upgrades are completely against the Arch philosophy!
 
 So **NEVER ever** enable the _AUTOUPGRADE_ of uAu!!! ;) - just kidding. I use the auto-upgrade since 2017 without any issues on 4 desktops and 2 servers.
 
+## Changelog
+
+see [CHANGELOG.md](CHANGELOG.md)
+
 ##  The usual Arch upgrade flow
 
 Upgrading Arch means you have to follow this:
