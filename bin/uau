@@ -8,6 +8,9 @@
 #
 ############################################################################
 
+# keep logs English
+export LC_ALL=C
+
 # TODO: log rotate (I do not want to overwrite by each run..)
 
 export TERM=non-interactive
@@ -28,6 +31,7 @@ fi
 . $UACONF
 
 LOG=$LOGDIR/upgrade-latest.log
+ELOG="$LOG.err"
 FULLLOG=$LOGDIR/upgrade.log
 
 START_DATE=$(date --date="$NOW")
@@ -69,7 +73,7 @@ check & upgrade REPO binaries
 
 EOF
 # shellcheck disable=SC2086
-sudo -n $PACBIN -Syu --noconfirm --needed --noprogressbar $PACARG 2>&1 | tee -a "$LOG"
+sudo -n $PACBIN -Syu --noconfirm --needed --noprogressbar $PACARG 2>&1 | tee -a "$LOG" 2>> "$ELOG"
 echo "check & upgrade AUR packages"
 cat <<EOF >> "$LOG"
 
@@ -79,7 +83,7 @@ check & upgrade AUR packages
 
 EOF
 # shellcheck disable=SC2086
-$AURBIN -Syu --noconfirm --needed --noprogressbar $AURARG >> "$LOG" 2>&1
+$AURBIN -Syu --noconfirm --needed --noprogressbar $AURARG >> "$LOG" 2>> "$ELOG"
 
 # check the systemd status and errors again after the upgrade made
 systemctl --failed --plain > "$LOGDIR"/systemctl-failed.after

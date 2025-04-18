@@ -9,6 +9,12 @@
 #
 ############################################################################
 
+# keep logs English
+export LC_ALL=C
+
+# max retries
+MAXCNT=20
+
 # unattended upgrade config
 UACONF=/etc/unattended-arch-upgrade.conf
 
@@ -94,42 +100,59 @@ These binary packages have been mentioned on the Arch news page!!
 (please also take a look at the bottom so you don't miss any GLOBAL news!)
 
 EOF
-# query arch news for each pkg
-$ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST
-if [ $? -eq 0 ];then
-    echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS -p $PKGLIST --debug)\n" >> $LOG 2>> $ELOG
-fi
 
-cat <<EOF >> "$LOG"
+# query arch news for each pkg
+# this can easily get hit by a request rate limit
+while [ $MAXCNT -lt $CNT ];do
+    $ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST >> $LOG 2>> $ELOG
+    if [ $? -ne 0 ];then
+        echo "rate limit exceeded?"
+        $ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST --debug 2>&1 | grep -q "429"
+        if [ $? -eq 0 ];then
+            echo "yes, rate limit exceeded!"
+            CNT=$((CNT + 1))
+            sleep 20
+        else
+            echo "$ANEWSPKGBIN: unusual error occured during news fetching" >> $LOG
+            break
+        fi
+    else
+        break
+    fi
+done
+
+if [ "$DISABLE_AURCHECK" != "yes" ];then
+    cat <<EOF >> "$LOG"
 
 
 These AUR packages can be upgraded on your machine ($(hostname)):
 ---------------------------------------------------------------------------
 
 EOF
-# shellcheck disable=SC2086
-for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$ELOG" | tr " " "|"); do
-    unset FPKG PKG
-    FPKG=$(echo "$cuaur: " |tr "|" " ")
-    PKG=$(echo "${cuaur%%|*}" | grep -Evi "($FILTER)")
-    if [ -n "$PKG" ]; then
-        echo "$FPKG"
-        $AURFETCH $AURFETCHARGS $PKG 2>> $ELOG \
-            | grep -Ev '^\s*$' \
-            | sed 's/\[[0-9]*m//g' 2>> $ELOG >> "$LOG"
-        echo >> $LOG
-    fi
-done
+    # shellcheck disable=SC2086
+    # FIXME: calling AURBIN does not respect the global LC_ALL=C !?
+    for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$ELOG" | grep -Ev "ermeide|avoid" | tr " " "|"); do
+        unset FPKG PKG
+        FPKG=$(echo "$cuaur" |tr "|" " ")
+        PKG=$(echo "${cuaur%%|*}" | grep -Evi "($FILTER)")
+        if [ -n "$PKG" ]; then
+            echo "$FPKG" >> $LOG
+            $AURFETCH $AURFETCHARGS $PKG 2>> $ELOG \
+                | grep -Ev '^\s*$' \
+                | sed 's/\[[0-9]*m//g' 2>> $ELOG >> $LOG
+        fi
+    done
 
-# prepare topic line depending on brief or not
-if [ "$BRIEFNEWS" = 1 ]; then
-    if [ -f "$ANEWSCONF" ]; then
-        NINF="only UNREAD - since: $(grep -v '#' "$ANEWSCONF")"
+    # prepare topic line depending on brief or not
+    if [ "$BRIEFNEWS" = 1 ]; then
+        if [ -f "$ANEWSCONF" ]; then
+            NINF="only UNREAD - since: $(grep -v '#' "$ANEWSCONF")"
+        else
+            NINF="only UNREAD - first run!"
+        fi
     else
-        NINF="only UNREAD - first run!"
+        NINF="with args: $ANEWSARGS"
     fi
-else
-    NINF="with args: $ANEWSARGS"
 fi
 
 cat <<EOF >> "$LOG"
