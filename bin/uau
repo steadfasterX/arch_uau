@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 ############################################################################
 #
 # Copyright(c) 2017-2025 steadfasterX <steadfasterX #AT# binbash |dot| rocks>
@@ -10,67 +10,123 @@
 
 # TODO: log rotate (I do not want to overwrite by each run..)
 
-# unattended upgrade config
-UACONF=/etc/unattended-arch-upgrade.conf
-
 export TERM=non-interactive
 
 # get current time stamp
-STARTTIME="$(date '+%F %T')"
+NOW=$(date --iso-8601=seconds)
+STARTTIME=$(date --date="$NOW" +'%F %T')
+
+# unattended upgrade config
+UACONF=/etc/unattended-arch-upgrade.conf
 
 # source the necessary conf
-[ ! -f $UACONF ]&& echo "ERROR MISSING $UACONF!!!" && exit 3
+if [ ! -f $UACONF ]; then
+    echo "ERROR: MISSING $UACONF!!!" >&2
+    exit 3
+fi
+# shellcheck disable=SC1090
 . $UACONF
 
 LOG=$LOGDIR/upgrade-latest.log
 FULLLOG=$LOGDIR/upgrade.log
 
-echo "started $(date)" 
-echo -e "$0 has started $(date)\n\n" > $LOG
+START_DATE=$(date --date="$NOW")
+echo "started $START_DATE"
+printf '%s has started %s\n\n\n' "$0" "$START_DATE" > "$LOG"
 
-if [ "$AUTOUPGRADE" == "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ];then
-        UPGRADECONF="$UAUON"
-else
-	echo "unattended upgrade is disabled in $UACONF" && exit 3
+if [ "$AUTOUPGRADE" != "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
+    echo "unattended upgrade is disabled in $UACONF"
+    exit 3
 fi
+UPGRADECONF=$UAUON
 
 echo "fetching the latest news (and AUR comments) before upgrading"
-echo -e "\n##########################################################\nArch news & AUR comments (for updatable packages only!)\n##########################################################" >> $LOG
-echo -e "as recommended by:\nhttps://wiki.archlinux.org/index.php/System_maintenance#Read_before_upgrading_the_system\n" >> $LOG
-echo -e "Please check $NEWSLOG\n(gets automatically attached when you've activated mail notify)\n" >> $LOG
+cat <<EOF >> "$LOG"
+
+##########################################################
+Arch news & AUR comments (for updatable packages only!)
+##########################################################
+
+as recommended by:
+https://wiki.archlinux.org/index.php/System_maintenance#Read_before_upgrading_the_system
+Please check $NEWSLOG
+(gets automatically attached when you've activated mail notify)
+
+EOF
 [ -x "$ANEWSWRAP" ] && UA=true $ANEWSWRAP
 
 echo "starting the unattended system upgrade!"
 
 # first check the current systemd status and errors and save them for later comparison
-systemctl --failed --plain > $LOGDIR/systemclt-failed.before
+systemctl --failed --plain > "$LOGDIR"/systemctl-failed.before
 
 echo "check & upgrade repo binaries"
-echo -e "\n##########################################################\ncheck & upgrade REPO binaries\n##########################################################\n" >> $LOG
-sudo -n $PACBIN -Syu --noconfirm --needed --noprogressbar $PACARG >> $LOG 2>&1
+cat <<EOF >> "$LOG"
+
+##########################################################
+check & upgrade REPO binaries
+##########################################################
+
+EOF
+# shellcheck disable=SC2086
+sudo -n $PACBIN -Syu --noconfirm --needed --noprogressbar $PACARG 2>&1 | tee -a "$LOG"
 echo "check & upgrade AUR packages"
-echo -e "\n##########################################################\ncheck & upgrade AUR packages\n##########################################################\n" >> $LOG
-$AURBIN -Syu --noconfirm --needed --noprogressbar $AURARG >> $LOG 2>&1
+cat <<EOF >> "$LOG"
+
+##########################################################
+check & upgrade AUR packages
+##########################################################
+
+EOF
+# shellcheck disable=SC2086
+$AURBIN -Syu --noconfirm --needed --noprogressbar $AURARG >> "$LOG" 2>&1
 
 # check the systemd status and errors again after the upgrade made
-systemctl --failed --plain > $LOGDIR/systemclt-failed.after
+systemctl --failed --plain > "$LOGDIR"/systemctl-failed.after
 
 # compare systemd status and errors and show differences only
-echo -e "\n##########################################################\nShowing systemd status difference (before VS. after upgrade)\n##########################################################" >> $LOG
-echo -e "as recommended by:\nhttps://wiki.archlinux.org/index.php/System_maintenance#Failed_systemd_services\n" >> $LOG
-diff -wu $LOGDIR/systemclt-failed.before $LOGDIR/systemclt-failed.after >> $LOG
-[ $? -eq 0 ]&& echo -e "-- Nothing has changed --\n" >> $LOG
+cat <<EOF >> "$LOG"
 
-echo -e "\n##########################################################\nShowing journal high prio errors (since the upgrade)\n##########################################################" >> $LOG
-echo -e "as recommended by:\nhttps://wiki.archlinux.org/index.php/System_maintenance#Logfiles\n" >> $LOG
-journalctl -p 3 -xb --since "$STARTTIME" >> $LOG
+##########################################################
+Showing systemd status difference (before VS. after upgrade)
+##########################################################
 
+as recommended by:
+https://wiki.archlinux.org/index.php/System_maintenance#Failed_systemd_services
 
-if [ "$UPGRADEMAIL" == "yes" ];then
-        echo -e "$(date)\n$UPGRADECONF" | mail -a $LOG -a $NEWSLOG -r $FROM -s "Unattended Arch upgrade on $(hostname)" $TO
+EOF
+if ! diff -wu \
+        "$LOGDIR"/systemctl-failed.before \
+        "$LOGDIR"/systemctl-failed.after >> "$LOG"; then
+    # shellcheck disable=SC3045
+    printf '-- Nothing has changed --\n\n' >> "$LOG"
 fi
 
-echo "$0 has finished $(date)" >> $LOG
-cat $LOG >> $FULLLOG
+cat <<EOF >> "$LOG"
+
+##########################################################
+Showing journal high prio errors (since the upgrade)
+##########################################################
+
+as recommended by:
+https://wiki.archlinux.org/index.php/System_maintenance#Logfiles
+
+EOF
+journalctl -p 3 -xb --since "$STARTTIME" >> "$LOG"
+
+
+END_DATE=$(date)
+if [ "$UPGRADEMAIL" = yes ]; then
+    printf "%s\n%s\n" "$END_DATE" "$UPGRADECONF" \
+        | mail \
+            -r "$FROM" \
+            -s "Unattended Arch upgrade on $(hostname)" \
+            -a "$LOG" \
+            -a "$NEWSLOG" \
+            "$TO"
+fi
+
+echo "$0 has finished $END_DATE" >> "$LOG"
+cat "$LOG" >> "$FULLLOG"
 
 echo "finished"
