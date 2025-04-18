@@ -1,7 +1,10 @@
 #!/bin/bash
 ############################################################################
 #
-# Unattended Upgrade of Arch
+# Copyright(c) 2017-2025 steadfasterX <steadfasterX #AT# binbash |dot| rocks>
+# License: GPLv3
+#
+# Unattended Arch Upgrade (uAu)
 #
 ############################################################################
 

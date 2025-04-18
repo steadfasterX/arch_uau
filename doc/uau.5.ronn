@@ -27,7 +27,7 @@ The option IgnorePkg EXTENDS the pacman IgnorePkg. This way you can have differe
 
 ## AUTHOR
 
-steadfasterX <steadfastX@boun.cr>
+steadfasterX <steadfasterX |AT| binbash #dot# rocks>
 
 ## SEE ALSO
 

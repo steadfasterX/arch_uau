@@ -2,6 +2,7 @@
 Description=Unattended Arch Upgrade timer - just watching...
 
 [Timer]
+# to override ensure you set OnCalendar= before your wanted schedule
 OnCalendar=Tue,Sat *-*-* 16:30:02
 Persistent=false
 

@@ -1,10 +1,10 @@
 [Unit]
-Description=Unattended Arch Upgrade
+Description=Unattended Arch Upgrade (uAu)
 Requires=network-online.target 
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/uau
+ExecStart=/usr/bin/uau
 TimeoutStopSec=900
 KillMode=process
 KillSignal=SIGINT

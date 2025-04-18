@@ -70,7 +70,7 @@ The following files should be reviewed and maybe adjusted for your needs:
 
 ## AUTHOR
 
-steadfasterX <steadfastX@boun.cr>
+steadfasterX <steadfasterX |AT| binbash #dot# rocks>
 
 ## SEE ALSO
 

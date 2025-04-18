@@ -1,11 +1,13 @@
 #!/bin/bash
-###############################################################
+############################################################################
 #
+# Copyright(c) 2017-2025 steadfasterX <steadfasterX #AT# binbash |dot| rocks>
+# License: GPLv3
 #
+# Part of: Unattended Arch Upgrade (uAu)
 # cron job to inform you about new Arch updates and their news
 #
-#
-###############################################################
+############################################################################
 
 # unattended upgrade config
 UACONF=/etc/unattended-arch-upgrade.conf
@@ -89,11 +91,8 @@ echo -e "\n\nThese binary packages have been mentioned on the Arch news page!!" 
 echo -e "---------------------------------------------------------------------------" >> $LOG
 echo -e "(please also take a look at the bottom so you don't miss any GLOBAL news!)\n" >> $LOG
 # query arch news for each pkg
-for pkgl in $SPKGLIST;do
-	FPKG=$(echo "#---- $pkgl ----#" |tr "|" " ")
-        $ANEWSBIN -rc -n 10 --grep "$pkgl " >> /dev/null 2>&1
-        [ $? -eq 0 ] && echo -e "${FPKG}\n$($ANEWSBIN -rc -n 10 --grep "$pkgl ")\n" >> $LOG 2>&1
-done
+$ANEWSBIN $ANEWSARGS -p $SPKGLIST
+[ $? -eq 0 ] && echo -e "${FPKG}\n$($ANEWSBIN $ANEWSARGS -p $PKGLIST --debug)\n" >> $LOG 2>&1
 
 echo -e "\n\nThese AUR packages can be upgraded on your machine ($(hostname)):" >> $LOG
 echo -e "---------------------------------------------------------------------------\n" >> $LOG
@@ -121,7 +120,7 @@ echo -e "-----------------------------------------------------------------------
 
 # we make a new same if loop to handle the formatted output more easily
 if [ "$BRIEFNEWS" == "1" ];then
-	yes | $ANEWSBIN $ANEWSARGS --unread 2>> $LOG | grep -iv "Mark messages as read" >> $LOG
+	yes | $ANEWSBIN $ANEWSARGS 2>> $LOG | grep -iv "Mark messages as read" >> $LOG
 else
 	# delete any unread option config so we actually be able to read news again
 	[ -f "$ANEWSCONF" ] && rm "$ANEWSCONF"
