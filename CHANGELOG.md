@@ -9,19 +9,19 @@ If you upgrade from a previous release please check the new settings especially 
 Example:
 
 ```
-diff -s /etc/unattended-arch-upgrade.conf /etc/unattended-arch-upgrade.conf.pacnew
+sdiff -s /etc/unattended-arch-upgrade.conf /etc/unattended-arch-upgrade.conf.pacnew
 ```
 
 Enhancements:
 
 - all executables have been moved to `/usr/bin` (before `/usr/local/bin`)
-- added: uau-news-parser
+- added: `uau-news-parser`
     - incl. enhanced output and several fixes
     - new option: `--html` (set as default)
-- added: uau-package-parser
+- added: `uau-package-parser`
     - incl. enhanced output/parsing
     - new option: `--html` (set as default)
-- renamed: uau-archnews -> uau-news-wrapper
+- renamed: `uau-archnews` -> `uau-news-wrapper`
 
 Fixes:
 
