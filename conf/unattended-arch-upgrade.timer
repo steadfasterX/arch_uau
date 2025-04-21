@@ -3,7 +3,7 @@ Description=Unattended Arch Upgrade timer - just watching...
 
 [Timer]
 # to override ensure you set OnCalendar= before your wanted schedule
-OnCalendar=Tue,Sat *-*-* 16:30:02
+OnCalendar=Tue,Sat *-*-* 16:33:33
 Persistent=false
 
 [Install]

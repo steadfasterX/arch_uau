@@ -128,6 +128,30 @@ else
     UPGRADECONF="$UAUON"
 fi
 
+cat <<EOF >> "$LOG"
+
+##########################################################
+Listing all installed packages (except foreign, like AUR)
+##########################################################
+
+as recommended by:
+https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#List_of_installed_packages
+
+EOF
+pacman -Qqen | tr '\n' ' ' >> $LOG
+
+cat <<EOF >> "$LOG"
+
+##########################################################
+Listing all foreign installed packages (e.g. AUR)
+##########################################################
+
+as recommended by:
+https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#List_of_installed_packages
+
+EOF
+pacman -Qqem | tr '\n' ' ' >> $LOG
+
 END_DATE=$(date)
 if [ "$UPGRADEMAIL" = yes ]; then
     echo -e "$END_DATE\n" "$UPGRADECONF" \
