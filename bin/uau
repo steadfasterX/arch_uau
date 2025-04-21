@@ -13,7 +13,7 @@ export LC_ALL=C
 
 # TODO: log rotate (I do not want to overwrite by each run..)
 
-export REBOOT_FLAG=/run/reboot-required
+REBOOT_FLAG=/run/reboot-required
 export TERM=non-interactive
 
 # get current time stamp
@@ -61,7 +61,9 @@ Please check $NEWSLOG
 (gets automatically attached when you've activated mail notify)
 
 EOF
-[ -x "$ANEWSWRAP" ] && UA=true $ANEWSWRAP
+if [ -x "$ANEWSWRAP" ];then
+    UA=true $ANEWSWRAP $ANEWSARGS
+fi
 
 echo "starting the unattended system upgrade!"
 
@@ -142,6 +144,7 @@ pacman -Qqen | tr '\n' ' ' >> $LOG
 
 cat <<EOF >> "$LOG"
 
+
 ##########################################################
 Listing all foreign installed packages (e.g. AUR)
 ##########################################################
@@ -151,6 +154,7 @@ https://wiki.archlinux.org/title/Pacman/Tips_and_tricks#List_of_installed_packag
 
 EOF
 pacman -Qqem | tr '\n' ' ' >> $LOG
+echo >> $LOG
 
 END_DATE=$(date)
 if [ "$UPGRADEMAIL" = yes ]; then

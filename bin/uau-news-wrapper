@@ -108,6 +108,7 @@ while [ $MAXCNT -gt $CNT ];do
             sleep 45
         else
             echo "$ANEWSPKGBIN: unusual error occured during news fetching" >> $LOG
+            $ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST --debug >> $ELOG 2>&1
             break
         fi
     else
