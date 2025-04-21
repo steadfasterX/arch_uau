@@ -23,10 +23,10 @@ Changes:
 - all executables have been moved to `/usr/bin` (before `/usr/local/bin`)
 - added: `uau-news-parser`
     - incl. enhanced output and several fixes
-    - new option: `--html` (set as default)
+    - new option: `--html` (--text is set as default)
 - added: `uau-package-parser`
     - incl. enhanced output/parsing
-    - new option: `--html` (set as default)
+    - new option: `--html` (--text set as default)
 - renamed: `uau-archnews` -> `uau-news-wrapper`
 - removed: read/unread options for Arch news feed
 
