@@ -103,9 +103,9 @@ while [ $MAXCNT -gt $CNT ];do
         echo "rate limit exceeded?"
         $ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST --debug 2>&1 | grep -q "429"
         if [ $? -eq 0 ];then
-            echo "yes, rate limit exceeded!"
+            echo "yes, rate limit exceeded! retrying in 45 secs.."
             CNT=$((CNT + 1))
-            sleep 20
+            sleep 45
         else
             echo "$ANEWSPKGBIN: unusual error occured during news fetching" >> $LOG
             break
