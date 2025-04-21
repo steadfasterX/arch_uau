@@ -6,7 +6,7 @@ So **NEVER ever** enable the _AUTOUPGRADE_ of uAu!!! ;) - just kidding. I use th
 
 ## Changelog
 
-see [CHANGELOG.md](CHANGELOG.md)
+see [CHANGELOG.md](https://github.com/steadfasterX/arch_uau-pkg/blob/main/CHANGELOG.md)
 
 ##  The usual Arch upgrade flow
 
