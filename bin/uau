@@ -13,6 +13,7 @@ export LC_ALL=C
 
 # TODO: log rotate (I do not want to overwrite by each run..)
 
+export REBOOT_FLAG=/run/reboot-required
 export TERM=non-interactive
 
 # get current time stamp
@@ -38,11 +39,14 @@ START_DATE=$(date --date="$NOW")
 echo "started $START_DATE"
 printf '%s has started %s\n\n\n' "$0" "$START_DATE" > "$LOG"
 
+if [ -e "$REBOOT_FLAG" ];then
+    rm $REBOOT_FLAG
+fi
+
 if [ "$AUTOUPGRADE" != "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
     echo "unattended upgrade is disabled in $UACONF"
     exit 3
 fi
-UPGRADECONF=$UAUON
 
 echo "fetching the latest news (and AUR comments) before upgrading"
 cat <<EOF >> "$LOG"
@@ -118,15 +122,19 @@ https://wiki.archlinux.org/index.php/System_maintenance#Logfiles
 EOF
 journalctl -p 3 -xb --since "$STARTTIME" >> "$LOG"
 
+if [ -e "$REBOOT_FLAG" ];then
+    UPGRADECONF="\n! REBOOT FLAG detected ($REBOOT_FLAG). You should consider rebooting asap !\n\n$UAUON"
+else
+    UPGRADECONF="$UAUON"
+fi
 
 END_DATE=$(date)
 if [ "$UPGRADEMAIL" = yes ]; then
-    echo -e "$END_DATE" "$UPGRADECONF" \
+    echo -e "$END_DATE\n" "$UPGRADECONF" \
         | mail \
             -r "$FROM" \
-            -s "Unattended Arch upgrade on $(hostname)" \
+            -s "FINISHED unattended Arch upgrade on $(hostname)!" \
             -a "$LOG" \
-            -a "$NEWSLOG" \
             "$TO"
 fi
 

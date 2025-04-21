@@ -1,0 +1,11 @@
+[Trigger]
+Operation = Upgrade
+Type = Package
+Target = linux
+Target = glibc
+Target = systemd
+
+[Action]
+Description = Touching /run/reboot-required
+When = PostTransaction
+Exec = /usr/bin/touch /run/reboot-required
