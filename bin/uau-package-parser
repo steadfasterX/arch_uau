@@ -62,9 +62,9 @@ def parse_package_feed(feed_url, package_list, days=14, output_format="text", de
         if output_format == "text":
             global_title = "These packages have been mentioned on the Arch News page"
             underline = "-" * (len(global_title) + 4)
-            results.insert(0, f"{global_title}\n{underline}")
+            results.insert(0, f"{global_title}\n{underline}\n(please also take a look at the bottom so you don't miss any GLOBAL news!)\n")
         elif output_format == "html":
-            global_title = "<h2><u>These packages have been mentioned on the Arch News page</u></h2>\n"
+            global_title = "<h2><u>These packages have been mentioned on the Arch News page</u></h2>\n(please also take a look at the bottom so you don't miss any GLOBAL news!)\n"
             results.insert(0, global_title)
 
     return results

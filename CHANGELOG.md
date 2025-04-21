@@ -18,7 +18,7 @@ Requirements:
 - removed: `archnews2`
 - removed: `python3-memoizedb`
 
-Enhancements:
+Changes:
 
 - all executables have been moved to `/usr/bin` (before `/usr/local/bin`)
 - added: `uau-news-parser`
@@ -28,6 +28,7 @@ Enhancements:
     - incl. enhanced output/parsing
     - new option: `--html` (set as default)
 - renamed: `uau-archnews` -> `uau-news-wrapper`
+- removed: read/unread options for Arch news feed
 
 Fixes:
 

@@ -9,9 +9,6 @@
 #
 ############################################################################
 
-# keep logs English
-export LC_ALL=C
-
 # max retries
 MAXCNT=20
 
@@ -94,16 +91,13 @@ done
 echo -e "$PKGLIST" >> "$LOG" 2>> $ELOG
 cat <<EOF >> "$LOG"
 
-
-These binary packages have been mentioned on the Arch news page!!
----------------------------------------------------------------------------
-(please also take a look at the bottom so you don't miss any GLOBAL news!)
-
 EOF
 
 # query arch news for each pkg
 # this can easily get hit by a request rate limit
-while [ $MAXCNT -lt $CNT ];do
+CNT=0
+while [ $MAXCNT -gt $CNT ];do
+    #echo "$ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST"
     $ANEWSPKGBIN $ANEWSPKGARGS -p $SPKGLIST >> $LOG 2>> $ELOG
     if [ $? -ne 0 ];then
         echo "rate limit exceeded?"
@@ -163,22 +157,10 @@ Latest Arch News feed ($NINF):
 
 EOF
 
-# we make a new same if loop to handle the formatted output more easily
-if [ "$BRIEFNEWS" = 1 ]; then
-    # shellcheck disable=SC2086
-    yes | $ANEWSBIN $ANEWSARGS 2>> "$ELOG" \
-        | grep -iv "Mark messages as read" >> "$LOG"
-else
-    # delete any unread option config so we actually be able to read news again
-    [ -f "$ANEWSCONF" ] && rm -f "$ANEWSCONF"
-    # shellcheck disable=SC2086
-    $ANEWSBIN $ANEWSARGS >> "$LOG" 2>> $ELOG
-fi
-
 if [ "$AUTOUPGRADE" = "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
-    UPGRADECONF=$UAUON
+    UPGRADECONF="$UAUON"
 else
-    UPGRADECONF=$UAUOFF
+    UPGRADECONF="$UAUOFF"
 fi
 
 # only send an email when wanted by the user and not called by unattended upgrade
@@ -188,13 +170,9 @@ if [ "$NEWSMAIL" = yes ] && [ -z "$UA" ]; then
                -s "Arch Update Information for $(hostname)" \
                "$TO"
 $(date)
-$UPGRADECONF
+$(echo -e "$UPGRADECONF")
 
 $(cat "$LOG")
-
-CHECK THE ATTACHMENT(S)!!
-
-
 
 EOF
 fi
