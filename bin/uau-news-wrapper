@@ -125,7 +125,7 @@ These AUR packages can be upgraded on your machine ($(hostname)):
 EOF
     # shellcheck disable=SC2086
     # FIXME: calling AURBIN does not respect the global LC_ALL=C !?
-    for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$ELOG" | grep -Ev "ermeide|avoid" | tr " " "|"); do
+    for cuaur in $($AURBIN $AURARGS_CHKUPGRADE 2>> "$ELOG" | grep -Ev "ermeide|avoid" | sort -u | tr " " "|"); do
         unset FPKG PKG
         FPKG=$(echo "$cuaur" |tr "|" " ")
         PKG=$(echo "${cuaur%%|*}" | grep -Evi "($FILTER)")
@@ -136,17 +136,7 @@ EOF
                 | sed 's/\[[0-9]*m//g' 2>> $ELOG >> $LOG
         fi
     done
-
-    # prepare topic line depending on brief or not
-    if [ "$BRIEFNEWS" = 1 ]; then
-        if [ -f "$ANEWSCONF" ]; then
-            NINF="only UNREAD - since: $(grep -v '#' "$ANEWSCONF")"
-        else
-            NINF="only UNREAD - first run!"
-        fi
-    else
-        NINF="with args: $ANEWSARGS"
-    fi
+    NINF="with args: $ANEWSARGS"
 fi
 
 cat <<EOF >> "$LOG"
@@ -156,8 +146,9 @@ Latest Arch News feed ($NINF):
 ---------------------------------------------------------------------------
 
 EOF
+$ANEWSBIN $ANEWSARGS >> $LOG 2>> $ELOG
 
-if [ "$AUTOUPGRADE" = "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
+if [ "$AUTOUPGRADE" == "I-UNDERSTAND-THAT-THIS-COULD-BREAK-MY-SYSTEM" ]; then
     UPGRADECONF="$UAUON"
 else
     UPGRADECONF="$UAUOFF"
