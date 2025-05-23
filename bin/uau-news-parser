@@ -90,7 +90,7 @@ def main():
     if results:
         print("\n".join(results))
     else:
-        print("No news titles found.")
+        print("No news found at the given time span.")
 
 
 if __name__ == "__main__":

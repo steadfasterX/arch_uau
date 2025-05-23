@@ -159,7 +159,7 @@ echo >> $LOG
 END_DATE=$(date)
 if [ "$UPGRADEMAIL" = yes ]; then
     echo -e "$END_DATE\n" "$UPGRADECONF" \
-        | mail \
+        | $MAILBIN \
             -r "$FROM" \
             -s "FINISHED unattended Arch upgrade on $(hostname)!" \
             -a "$LOG" \

@@ -143,7 +143,7 @@ fi
 cat <<EOF >> "$LOG"
 
 
-Latest Arch News feed ($NINF):
+Latest Arch News feed ($ANEWSARGS):
 ---------------------------------------------------------------------------
 
 EOF
@@ -158,9 +158,10 @@ fi
 # only send an email when wanted by the user and not called by unattended upgrade
 if [ "$NEWSMAIL" = yes ] && [ -z "$UA" ]; then
     cat <<EOF \
-        | mail -r "$FROM" \
-               -s "Arch Update Information for $(hostname)" \
-               "$TO"
+        | $MAILBIN \
+            -r "$FROM" \
+            -s "Arch Update Information for $(hostname)" \
+            "$TO"
 $(date)
 $(echo -e "$UPGRADECONF")
 
